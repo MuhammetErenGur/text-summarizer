@@ -2,7 +2,7 @@ import os
 import sys
 import re
 from PyQt6 import QtCore, QtGui, QtWidgets, uic
-from PyQt6.QtWidgets import QFileDialog
+from PyQt6.QtWidgets import QFileDialog,QDialog, QLabel, QVBoxLayout
 import networkx as nx
 import matplotlib.pyplot as plt
 from modules.TokenizeText import start_tokenization
@@ -12,17 +12,29 @@ from nltk.corpus import stopwords
 from nltk.corpus import wordnet as wn
 import threading
 
-class SentenceNode:
-    def __init__(self,text,textScore) -> None:
-        self.text=text
-        self.textScore=textScore
+class Sentence:
+    def __init__(self,sentence,sentence_score):
+        self.sentence=sentence
+        self.sentence_score=sentence_score
 
+
+
+class SentenceDialog(QDialog):
+    def __init__(self, sentence, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Cümle özellikleri")
+        layout = QVBoxLayout()
+        self.sentence_label = QLabel(f"Cümle: {sentence.sentence}")
+        layout.addWidget(self.sentence_label)
+        self.sentence_score_label = QLabel(f"Cümle Skoru: {sentence.sentence_score}")
+        layout.addWidget(self.sentence_score_label)
+        self.setLayout(layout)
 
 
 sentenceList=[]
-G = nx.DiGraph(directed=True)
 
-class MainWindow(QtWidgets.QMainWindow):
+
+class MainWindow(QtWidgets.QMainWindow,QtWidgets.QWidget):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -33,11 +45,14 @@ class MainWindow(QtWidgets.QMainWindow):
         self.pushButton.clicked.connect(self.button_clicked)
         self.textPath=""
         self.summarizedTextPath=""
+        self.G = nx.DiGraph()
         self.preProccessedSentences=[]
         self.tokenizeThreadList=[]
         self.semanticRelationThreadList=[]
         self.semanticRelationRateList=[]
         self.embeddings=[]
+        
+
     
 
     def mainTextUpload(self):
@@ -77,13 +92,25 @@ class MainWindow(QtWidgets.QMainWindow):
         for thread in threadList:
             thread.join()
 
+
+    def on_click(self, event,pos):
+        if event.inaxes is not None:
+            for node in self.G.nodes():
+                x,y=pos[node]
+                if x - 0.05 < event.xdata < x + 0.05 and y - 0.05 < event.ydata < y + 0.05:
+                    sentence = self.G.nodes[node]["sentence"]
+                    dialog =SentenceDialog(sentence) #düzenle
+                    dialog.exec()
+
+
+
     def relationship_Between_Sentences(self, lines):
         sentences= re.split("\.|\n\n", lines)
         title=re.findall("^(?!.*\.).*",lines)[0]
         sentences=list(filter(lambda i: i !=''  and i != title,sentences))
         sentence = ''
         for i in range(len(sentences)):
-            # G.add_node(i+1,sentence=sentences[i],sentence_score=0)
+            self.G.add_node(i+1,sentence=Sentence(sentences[i],0))
             sentence += f"Cümle {i+1} : {sentences[i].strip()} \n"
             sentenceList.append(sentences[i])
             
@@ -96,12 +123,14 @@ class MainWindow(QtWidgets.QMainWindow):
         self.embeddings=[None]*len(self.preProccessedSentences)
         create_threads(self.semanticRelationThreadList,self.preProccessedSentences,self.embeddings)
         self.semanticRelationRateList=get_cos_similarity(self.embeddings,self.preProccessedSentences)
-        print(self.semanticRelationRateList)
-        G.add_weighted_edges_from(self.semanticRelationRateList)
-        pos = nx.spring_layout(G,weight='weight',scale=10000,k=50)
-        labels = nx.get_edge_attributes(G, 'weight')
-        nx.draw(G,pos, node_size=500, with_labels=True, font_size=8, width=1,)
-        nx.draw_networkx_edge_labels(G, pos, edge_labels=labels,font_size=5)
+        self.G.add_weighted_edges_from(self.semanticRelationRateList)
+        pos = nx.spring_layout(self.G,weight='weight')
+        edge_labels = nx.get_edge_attributes(self.G, 'weight')
+        nx.draw_networkx_nodes(self.G, pos)
+        nx.draw_networkx_edges(self.G, pos)
+        nx.draw_networkx_labels(self.G,pos,font_size=5)
+        nx.draw_networkx_edge_labels(self.G,pos,edge_labels=edge_labels,font_size=5)
+        cid=plt.gcf().canvas.mpl_connect('button_press_event', lambda event: self.on_click(event,pos))
         plt.show() 
 
 
