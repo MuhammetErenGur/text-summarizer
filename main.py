@@ -11,7 +11,8 @@ from modules.SemanticRelationship import create_threads,get_cos_similarity
 from nltk.corpus import stopwords
 from nltk.corpus import wordnet as wn
 import threading
-
+from torchmetrics.functional.text.rouge import rouge_score
+from modules.plot import PlotPage
 class Sentence:
     def __init__(self,sentence,sentence_score):
         self.sentence=sentence
@@ -34,7 +35,7 @@ class SentenceDialog(QDialog):
 sentenceList=[]
 
 
-class MainWindow(QtWidgets.QMainWindow,QtWidgets.QWidget):
+class MainWindow(QtWidgets.QMainWindow):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -42,7 +43,8 @@ class MainWindow(QtWidgets.QMainWindow,QtWidgets.QWidget):
         self.setWindowTitle("Özellik Seçim Ekranı")
         self.toolButton.clicked.connect(self.mainTextUpload)
         self.toolButton_2.clicked.connect(self.ozetTextUpload)
-        self.pushButton.clicked.connect(self.button_clicked)
+        self.pushButton.clicked.connect(self.create_graph_button_clicked)
+        self.pushButton_2.clicked.connect(self.visualize_graph_button_clicked)
         self.textPath=""
         self.summarizedTextPath=""
         self.G = nx.DiGraph()
@@ -51,6 +53,7 @@ class MainWindow(QtWidgets.QMainWindow,QtWidgets.QWidget):
         self.semanticRelationThreadList=[]
         self.semanticRelationRateList=[]
         self.embeddings=[]
+        self.window=None
         
 
     
@@ -73,14 +76,22 @@ class MainWindow(QtWidgets.QMainWindow,QtWidgets.QWidget):
 
 
 
-    def button_clicked(self):
+    def create_graph_button_clicked(self):
         self.textPath = self.metinText.text()
         self.summarizedTextPath= self.ozetText.text()
         f = open(self.textPath)
         lines = f.read()
         f.close()
-        self.relationship_Between_Sentences(lines)
         score_list = calculate_score(lines)
+        self.relationship_Between_Sentences(lines,score_list)
+    
+    def visualize_graph_button_clicked(self):
+        pos = nx.spring_layout(self.G,weight='weight')
+        edge_labels = nx.get_edge_attributes(self.G, 'weight')
+        
+        if self.window is None:
+            self.window = PlotPage(self.G,pos,edge_labels)
+        self.window.show()
 
     def create_tokenize_threads(self,threadList,texts,tokenizedList,stopWords):
         wn.ensure_loaded()
@@ -93,24 +104,17 @@ class MainWindow(QtWidgets.QMainWindow,QtWidgets.QWidget):
             thread.join()
 
 
-    def on_click(self, event,pos):
-        if event.inaxes is not None:
-            for node in self.G.nodes():
-                x,y=pos[node]
-                if x - 0.05 < event.xdata < x + 0.05 and y - 0.05 < event.ydata < y + 0.05:
-                    sentence = self.G.nodes[node]["sentence"]
-                    dialog =SentenceDialog(sentence) #düzenle
-                    dialog.exec()
+    
 
 
 
-    def relationship_Between_Sentences(self, lines):
+    def relationship_Between_Sentences(self, lines,score_list):
         sentences= re.split("\.|\n\n", lines)
         title=re.findall("^(?!.*\.).*",lines)[0]
         sentences=list(filter(lambda i: i !=''  and i != title,sentences))
         sentence = ''
         for i in range(len(sentences)):
-            self.G.add_node(i+1,sentence=Sentence(sentences[i],0))
+            self.G.add_node(i+1,sentence=Sentence(sentences[i],score_list[i]))
             sentence += f"Cümle {i+1} : {sentences[i].strip()} \n"
             sentenceList.append(sentences[i])
             
@@ -124,18 +128,14 @@ class MainWindow(QtWidgets.QMainWindow,QtWidgets.QWidget):
         create_threads(self.semanticRelationThreadList,self.preProccessedSentences,self.embeddings)
         self.semanticRelationRateList=get_cos_similarity(self.embeddings,self.preProccessedSentences)
         self.G.add_weighted_edges_from(self.semanticRelationRateList)
-        pos = nx.spring_layout(self.G,weight='weight')
-        edge_labels = nx.get_edge_attributes(self.G, 'weight')
-        nx.draw_networkx_nodes(self.G, pos)
-        nx.draw_networkx_edges(self.G, pos)
-        nx.draw_networkx_labels(self.G,pos,font_size=5)
-        nx.draw_networkx_edge_labels(self.G,pos,edge_labels=edge_labels,font_size=5)
-        cid=plt.gcf().canvas.mpl_connect('button_press_event', lambda event: self.on_click(event,pos))
-        plt.show() 
+        
 
 
 
-
+    def calculate_rouge_score(self,text,ozet):
+        RG = rouge_score(text, ozet)
+        return RG
+    
 
 
 

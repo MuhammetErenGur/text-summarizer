@@ -34,7 +34,7 @@
      <rect>
       <x>50</x>
       <y>20</y>
-      <width>351</width>
+      <width>391</width>
       <height>80</height>
      </rect>
     </property>
@@ -43,7 +43,7 @@
       <rect>
        <x>200</x>
        <y>10</y>
-       <width>23</width>
+       <width>51</width>
        <height>23</height>
       </rect>
      </property>
@@ -57,7 +57,7 @@
       <set>Qt::ImhNone</set>
      </property>
      <property name="text">
-      <string>...</string>
+      <string>Gözat</string>
      </property>
      <property name="autoRaise">
       <bool>false</bool>
@@ -68,12 +68,12 @@
       <rect>
        <x>200</x>
        <y>50</y>
-       <width>23</width>
+       <width>51</width>
        <height>23</height>
       </rect>
      </property>
      <property name="text">
-      <string>...</string>
+      <string>Gözat</string>
      </property>
     </widget>
     <widget class="QLineEdit" name="metinText">
@@ -108,14 +108,14 @@
     <widget class="QPushButton" name="pushButton">
      <property name="geometry">
       <rect>
-       <x>260</x>
+       <x>280</x>
        <y>50</y>
-       <width>80</width>
+       <width>91</width>
        <height>24</height>
       </rect>
      </property>
      <property name="text">
-      <string>Ok</string>
+      <string>Grafı Oluştur</string>
      </property>
     </widget>
    </widget>
@@ -129,6 +129,29 @@
      </rect>
     </property>
    </widget>
+   <widget class="QWidget" name="widget_2" native="true">
+    <property name="geometry">
+     <rect>
+      <x>140</x>
+      <y>160</y>
+      <width>151</width>
+      <height>61</height>
+     </rect>
+    </property>
+    <widget class="QPushButton" name="pushButton_2">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>20</y>
+       <width>111</width>
+       <height>24</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Grafı Görüntüle</string>
+     </property>
+    </widget>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
@@ -136,7 +159,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>21</height>
+     <height>25</height>
     </rect>
    </property>
   </widget>
