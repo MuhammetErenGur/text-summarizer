@@ -1,1 +1,1 @@
-__all__=["SemanticRelationship","TokenizeText","SentenceScore"]
+__all__=["SemanticRelationship","TokenizeText","SentenceScore","plot"]
