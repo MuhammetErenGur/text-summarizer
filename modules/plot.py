@@ -46,6 +46,7 @@ class PlotPage(QtWidgets.QMainWindow):
     
     def __init__(self,G,pos,edge_labels):
         super().__init__()
+        self.cid=None
         self.G_filtered=nx.DiGraph()
         self.G=G
         self.pos=pos
@@ -59,6 +60,8 @@ class PlotPage(QtWidgets.QMainWindow):
         self.filtered_list = []
 
     def filter_graph(self):
+        if self.cid != None:
+            self.fig.canvas.mpl_disconnect(self.cid)
         sentence_score=float(self.plainTextEdit.toPlainText())
         sentence_similarity=float(self.plainTextEdit_2.toPlainText())
         
@@ -83,7 +86,7 @@ class PlotPage(QtWidgets.QMainWindow):
         nx.draw_networkx_edges(self.G_filtered, self.pos, ax=ax)
         nx.draw_networkx_labels(self.G_filtered, self.pos, font_size=5, ax=ax)
         nx.draw_networkx_edge_labels(self.G_filtered, self.pos, edge_labels=self.edge_labels, font_size=5, ax=ax)
-        self.fig.canvas.mpl_connect('button_press_event', lambda event: self.on_click(event,self.pos))
+        self.cid=self.fig.canvas.mpl_connect('button_press_event', lambda event: self.on_click(event,self.pos))
         self.fig.canvas.draw()
        
         
