@@ -77,6 +77,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
     def create_graph_button_clicked(self):
+        self.G = nx.DiGraph()
         self.textPath = self.metinText.text()
         self.summarizedTextPath= self.ozetText.text()
         f = open(self.textPath)
@@ -114,7 +115,12 @@ class MainWindow(QtWidgets.QMainWindow):
         sentences=list(filter(lambda i: i !=''  and i != title,sentences))
         sentence = ''
         for i in range(len(sentences)):
-            self.G.add_node(i+1,sentence=Sentence(sentences[i],score_list[i]))
+            p1=score_list[i][0]
+            p2=score_list[i][1]
+            p3=score_list[i][2]
+            p4=score_list[i][3]
+            sentence_score=(p4+p3)/1+(p2+p1)
+            self.G.add_node(i+1,sentence=Sentence(sentences[i],round(sentence_score,3)))
             sentence += f"Cümle {i+1} : {sentences[i].strip()} \n"
             sentenceList.append(sentences[i])
             

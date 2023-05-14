@@ -28,6 +28,9 @@ def calculate_score(text):
         numeric = find_numeric_char(word)
         entry_similarity = title_similarity(word.lower(), entry.lower())
         theme_similar = theme_similarity(word, keywords)
+        word=re.split(" ",word)
+        if word[0]== '':
+            word.remove('')
         sentence_length = len(word)
         sentence_score_list.append([noun / sentence_length, numeric / sentence_length, entry_similarity / sentence_length, theme_similar / sentence_length])
 
@@ -63,7 +66,7 @@ def theme_similarity(text, keywords):
     while i < len(text):
         j = 0
         while j < len(keywords):
-            if text[i] == keywords[j]:
+            if text[i] == keywords[j][1]:
                 counter += 1
                 break
             j += 1
