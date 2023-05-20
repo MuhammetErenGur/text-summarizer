@@ -14,9 +14,10 @@ import threading
 from torchmetrics.functional.text.rouge import rouge_score
 from modules.plot import PlotPage
 class Sentence:
-    def __init__(self,sentence,sentence_score):
+    def __init__(self,sentence,sentence_score,related_nodes_number):
         self.sentence=sentence
         self.sentence_score=sentence_score
+        self.related_nodes_number=related_nodes_number
 
 
 
@@ -47,13 +48,14 @@ class MainWindow(QtWidgets.QMainWindow):
         self.pushButton_2.clicked.connect(self.visualize_graph_button_clicked)
         self.textPath=""
         self.summarizedTextPath=""
-        self.G = nx.DiGraph()
+        self.G = nx.Graph()
         self.preProccessedSentences=[]
         self.tokenizeThreadList=[]
         self.semanticRelationThreadList=[]
         self.semanticRelationRateList=[]
         self.embeddings=[]
         self.window=None
+        self.score_list=[]
         
 
     
@@ -77,21 +79,21 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
     def create_graph_button_clicked(self):
-        self.G = nx.DiGraph()
+        self.G = nx.Graph()
         self.textPath = self.metinText.text()
         self.summarizedTextPath= self.ozetText.text()
         f = open(self.textPath)
         lines = f.read()
         f.close()
-        score_list = calculate_score(lines)
-        self.relationship_Between_Sentences(lines,score_list)
+        self.score_list = calculate_score(lines)
+        self.relationship_Between_Sentences(lines)
     
     def visualize_graph_button_clicked(self):
         pos = nx.spring_layout(self.G,weight='weight')
         edge_labels = nx.get_edge_attributes(self.G, 'weight')
         
         if self.window is None:
-            self.window = PlotPage(self.G,pos,edge_labels)
+            self.window = PlotPage(self.G,pos,edge_labels,self.score_list)
         self.window.show()
 
     def create_tokenize_threads(self,threadList,texts,tokenizedList,stopWords):
@@ -109,18 +111,13 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
 
-    def relationship_Between_Sentences(self, lines,score_list):
+    def relationship_Between_Sentences(self, lines):
         sentences= re.split("\.|\n\n", lines)
         title=re.findall("^(?!.*\.).*",lines)[0]
         sentences=list(filter(lambda i: i !=''  and i != title,sentences))
         sentence = ''
         for i in range(len(sentences)):
-            p1=score_list[i][0]
-            p2=score_list[i][1]
-            p3=score_list[i][2]
-            p4=score_list[i][3]
-            sentence_score=(p4+p3)/1+(p2+p1)
-            self.G.add_node(i+1,sentence=Sentence(sentences[i],round(sentence_score,3)))
+            self.G.add_node(i+1,sentence=Sentence(sentences[i],0,0))
             sentence += f"Cümle {i+1} : {sentences[i].strip()} \n"
             sentenceList.append(sentences[i])
             
@@ -134,6 +131,19 @@ class MainWindow(QtWidgets.QMainWindow):
         create_threads(self.semanticRelationThreadList,self.preProccessedSentences,self.embeddings)
         self.semanticRelationRateList=get_cos_similarity(self.embeddings,self.preProccessedSentences)
         self.G.add_weighted_edges_from(self.semanticRelationRateList)
+        sum_of_neighbors=0
+        for node in self.G.nodes():
+            sum_of_neighbors+=len(self.G.adj[node])
+            
+        for node in self.G.nodes():
+            p1=self.score_list[node-1][0]
+            p2=self.score_list[node-1][1]
+            p3=self.score_list[node-1][2]
+            p4=self.score_list[node-1][3]
+            neighbors_number=len(self.G.adj[node])
+            self.G.nodes[node]['sentence'].related_nodes_number=neighbors_number
+            self.G.nodes[node]['sentence'].sentence_score=(p4+p3+(neighbors_number/sum_of_neighbors))/1+(p2+p1)
+
         
 
 
