@@ -3,8 +3,8 @@ import torch
 import threading
 
 
-tokenizer = BertTokenizer.from_pretrained("bert-base-cased")
-model = BertModel.from_pretrained("bert-base-uncased")
+tokenizer = BertTokenizer.from_pretrained("bert-large-uncased")
+model = BertModel.from_pretrained("bert-large-uncased")
 
 
 def create_embeddings(text_index,embeddings,texts):

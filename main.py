@@ -87,13 +87,14 @@ class MainWindow(QtWidgets.QMainWindow):
         f.close()
         self.score_list = calculate_score(lines)
         self.relationship_Between_Sentences(lines)
+        lines=""
     
     def visualize_graph_button_clicked(self):
         pos = nx.spring_layout(self.G,weight='weight')
         edge_labels = nx.get_edge_attributes(self.G, 'weight')
         
         if self.window is None:
-            self.window = PlotPage(self.G,pos,edge_labels,self.score_list)
+            self.window = PlotPage(self.G,pos,edge_labels,self.score_list,self.summarizedTextPath)
         self.window.show()
 
     def create_tokenize_threads(self,threadList,texts,tokenizedList,stopWords):
@@ -124,8 +125,7 @@ class MainWindow(QtWidgets.QMainWindow):
         
     
         self.nodeSentence.setText(sentence)
-        print("hesaplama")
-        stopWords = list(set(stopwords.words('english')))
+        stopWords = stopwords.words('english')
         self.create_tokenize_threads(self.tokenizeThreadList,sentenceList,self.preProccessedSentences,stopWords)
         self.embeddings=[None]*len(self.preProccessedSentences)
         create_threads(self.semanticRelationThreadList,self.preProccessedSentences,self.embeddings)
@@ -142,15 +142,11 @@ class MainWindow(QtWidgets.QMainWindow):
             p4=self.score_list[node-1][3]
             neighbors_number=len(self.G.adj[node])
             self.G.nodes[node]['sentence'].related_nodes_number=neighbors_number
-            self.G.nodes[node]['sentence'].sentence_score=(p4+p3+(neighbors_number/sum_of_neighbors))/1+(p2+p1)
+            self.G.nodes[node]['sentence'].sentence_score=(p4+p3+((neighbors_number/sum_of_neighbors)*len(self.G.nodes())))/3*(1+(p2+p1))
 
         
 
 
-
-    def calculate_rouge_score(self,text,ozet):
-        RG = rouge_score(text, ozet)
-        return RG
     
 
 
