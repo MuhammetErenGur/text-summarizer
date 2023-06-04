@@ -142,7 +142,7 @@ class MainWindow(QtWidgets.QMainWindow):
             p4=self.score_list[node-1][3]
             neighbors_number=len(self.G.adj[node])
             self.G.nodes[node]['sentence'].related_nodes_number=neighbors_number
-            self.G.nodes[node]['sentence'].sentence_score=(p4+p3+((neighbors_number/sum_of_neighbors)*len(self.G.nodes())))/3*(1+(p2+p1))
+            self.G.nodes[node]['sentence'].sentence_score=round(((p4+0.5)+p3+((neighbors_number/sum_of_neighbors)*len(self.G.nodes())))/3*(1+(p2+p1)),3)
 
         
 

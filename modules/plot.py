@@ -96,7 +96,7 @@ class PlotPage(QtWidgets.QMainWindow):
             p4=self.score_list[node-1][3]
             neighbors_number=len(self.G_filtered.adj[node])
             self.G_filtered.nodes[node]['sentence'].related_nodes_number=neighbors_number
-            self.G_filtered.nodes[node]['sentence'].sentence_score=(p4+p3+((neighbors_number/sum_of_neighbors)*len(self.G_filtered.nodes())))/3*(1+(p2+p1))
+            self.G_filtered.nodes[node]['sentence'].sentence_score=round((p4+p3+((neighbors_number/sum_of_neighbors)*len(self.G_filtered.nodes())))/3*(1+(p2+p1)),3)
 
 
 
@@ -123,17 +123,9 @@ class PlotPage(QtWidgets.QMainWindow):
             self.window = SummaryPage()
             print(self.window.summary)
             
-
-        self.window.update_summary(text, str(self.calculate_rouge_score(text, lines)))
+        RG=self.calculate_rouge_score(text, lines)
+        self.window.update_summary(text,''.join(RG))
         self.window.show()
-            # start_node=max(self.G_filtered.nodes(data=True),key=lambda score: score[1]['sentence'].sentence_score)
-            
-            # T = nx.algorithms.tree.maximum_spanning_tree(self.G_filtered, algorithm='prim')
-            # for node in T.nodes():
-            #     print(T.nodes[node]['sentence'].sentence,T.nodes[node]['sentence'].sentence_score)
-            # print(f'nodes: {T.nodes(data=True)}, {T.edges(data=True)}')
-            # nx.draw(T, with_labels=True)
-            # plt.show()
         
         
     def create_summary_text(self):
@@ -169,7 +161,11 @@ class PlotPage(QtWidgets.QMainWindow):
 
     def calculate_rouge_score(self,text,ozet):
         RG = rouge_score(text, ozet)
-        return RG
+        formatted_score=[]
+        for metric , value in RG.items():
+            fs=f'{metric} : {value.item(): .3f}% \n'
+            formatted_score.append(fs)
+        return formatted_score
     
 
     def on_click(self, event,pos):
